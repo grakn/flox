@@ -10,29 +10,17 @@ from flox.logger import setup_logging
 from flox.context import FloxContext
 from flox.projects import Project
 
+from jinja2 import Environment, PackageLoader, select_autoescape
+
+env = Environment(
+    loader=PackageLoader("flox", "templates"),
+    autoescape=select_autoescape(["j2"])
+)
 
 @click.group()
 def cli():
     """Flox CLI: project lifecycle manager"""
     pass
-
-CODE_TEMPLATE = """from flox import FloxContext, Flox
-
-async def main():
-    cfg = FloxConfig(service="test", environment="test", projects={})
-    flox_ctx = FloxContext(cfg)
-    ctx = flox_ctx.create_request_context(
-        tenant_id="{project_code}",
-        project_code="{project_code}",
-        correlation_id="sample-correlation-id"
-        )
-    flox = Flox(ctx)
-    flox.logger.info("project started")
-
-    if __name__ == "__main__":
-        import asyncio
-        asyncio.run(main())
-"""
 
 @cli.command()
 @click.argument("project_code")
@@ -52,18 +40,13 @@ def create(project_code: str, path: str):
 
     target_dir.mkdir(parents=True, exist_ok=False)
 
-    # Create basic structure
-    (target_dir / "main.py").write_text(CODE_TEMPLATE)
-
+    # Render templates
+    ctx = {"project_code": project_code}
+    (target_dir / "main.py").write_text(
+        env.get_template("main.py.j2").render(**ctx)
+    )
     (target_dir / "flox.yaml").write_text(
-        f"""service: {project_code}
-environment: development
-log_level: DEBUG
-projects:
-  {project_code}:
-    {project_code}:
-      model_path: "./model"
-"""
+        env.get_template("flox.yaml.j2").render(**ctx)
     )
 
     click.echo(f"✅ Project '{project_code}' created at {target_dir}")

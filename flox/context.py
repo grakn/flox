@@ -4,7 +4,7 @@ import threading
 import structlog
 from .config import FloxConfig
 from .projects import Project
-
+from .logger import setup_logging, register_log_callback
 
 class Context:
     """
@@ -34,10 +34,20 @@ class FloxContext:
             with cls._instance_lock:
                 if cls._instance is None:
                     cls._instance = super().__new__(cls)
-                    cls._instance._projects = {}
-                    cls._instance._projects_lock = threading.Lock()
-                    cls._instance.config = config
+                    cls._instance.__init_singleton__(config)
         return cls._instance
+
+    def __init_singleton__(self, config):
+        """Initialize singleton only once"""
+        self._projects = {}
+        self._projects_lock = threading.Lock()
+        self.config = config
+
+        # Automatically setup logging
+        if config:
+            setup_logging(config)
+            if config.log_callback:
+                register_log_callback(config.log_callback)
 
     def register_project(self, project: Project):
         key = (project.tenant_id, project.project_code)
