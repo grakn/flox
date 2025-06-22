@@ -1,5 +1,6 @@
-import click
+import shutil
 from pathlib import Path
+import click
 import shutil
 import os
 import sys
@@ -15,6 +16,23 @@ def cli():
     """Flox CLI: project lifecycle manager"""
     pass
 
+CODE_TEMPLATE = """from flox import FloxContext, Flox
+
+async def main():
+    cfg = FloxConfig(service="test", environment="test", projects={})
+    flox_ctx = FloxContext(cfg)
+    ctx = flox_ctx.create_request_context(
+        tenant_id="{project_code}",
+        project_code="{project_code}",
+        correlation_id="sample-correlation-id"
+        )
+    flox = Flox(ctx)
+    flox.logger.info("project started")
+
+    if __name__ == "__main__":
+        import asyncio
+        asyncio.run(main())
+"""
 
 @cli.command()
 @click.argument("project_code")
@@ -22,27 +40,20 @@ def cli():
 def create(project_code: str, path: str):
     """Create a new flox project in the given directory."""
     target_dir = Path(path) / project_code
+
+    if target_dir.exists():
+        click.confirm(
+            f"Directory '{target_dir}' already exists. Do you want to override it?",
+            abort=True,
+            default=False,
+        )
+        # User confirmed: remove directory before recreating
+        shutil.rmtree(target_dir)
+
     target_dir.mkdir(parents=True, exist_ok=False)
 
     # Create basic structure
-    (target_dir / "main.py").write_text(
-        f"""from flox import FloxContext, Flox
-
-async def main():
-    flox_ctx = FloxContext()
-    ctx = flox_ctx.create_request_context(
-        tenant_id="{project_code}",
-        project_code="{project_code}",
-        correlation_id="sample-correlation-id"
-    )
-    flox = Flox(ctx, correlation_id="sample-correlation-id")
-    flox.logger.info("project started")
-
-if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
-"""
-    )
+    (target_dir / "main.py").write_text(CODE_TEMPLATE)
 
     (target_dir / "flox.yaml").write_text(
         f"""service: {project_code}

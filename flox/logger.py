@@ -2,7 +2,6 @@ import logging
 import sys
 import structlog
 from typing import Callable, Optional
-from pythonjsonlogger import json
 from .config import FloxConfig
 
 # This will hold the callback if registered
@@ -22,20 +21,20 @@ def _callback_processor(logger, method_name, event_dict):
     return event_dict
 
 def setup_logging(config: FloxConfig):
-    handler = logging.StreamHandler(sys.stdout)
-    formatter = json.JsonFormatter('%(message)s')
-    handler.setFormatter(formatter)
-
-    logging.basicConfig(level=config.log_level, handlers=[handler])
+    logging.basicConfig(
+        level=config.log_level,
+        stream=sys.stdout,
+        format="%(message)s",  # Let structlog render JSON
+    )
 
     structlog.configure(
         processors=[
             structlog.processors.TimeStamper(fmt="iso", utc=True),
             structlog.processors.add_log_level,
-            _callback_processor,  # ← your callback processor here
+            _callback_processor,
             structlog.processors.EventRenamer("message"),
             structlog.processors.dict_tracebacks,
-            structlog.processors.JSONRenderer(),
+            structlog.processors.JSONRenderer(),  # ← only JSON renderer
         ],
         context_class=dict,
         logger_factory=structlog.stdlib.LoggerFactory(),
