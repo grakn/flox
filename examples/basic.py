@@ -6,7 +6,7 @@ from flox.projects import Project
 from flox.flox import Flox
 
 async def main():
-    config = FloxConfig.load_from_file("flox.yaml")
+    config = FloxConfig.load_yaml("flox.yaml")
     setup_logging(config)
 
     flox_ctx = FloxContext(config)
@@ -25,7 +25,7 @@ async def main():
         user_id="user-5678"
     )
 
-    flox = Flox(ctx, correlation_id="corr-1234", user_id="user-5678")
+    flox = Flox(ctx)
     await flox.handle_event({"some": "data"})
 
 if __name__ == "__main__":
