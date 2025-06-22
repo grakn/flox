@@ -14,7 +14,7 @@ class FloxContext:
     _instance_lock = threading.Lock()
     _context_var = contextvars.ContextVar("flox_current_context")
 
-    def __new__(cls, config: FloxConfig):
+    def __new__(cls, config: FloxConfig=None):
         with cls._instance_lock:
             if cls._instance is None:
                 cls._instance = super().__new__(cls)

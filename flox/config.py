@@ -9,7 +9,7 @@ class FloxConfig(BaseModel):
     projects: Dict[str, Dict[str, Dict[str, Any]]] = Field(default_factory=dict)
 
     @classmethod
-    def load_yaml(cls, path: str) -> FloxConfig:
+    def load_yaml(cls, path: str) -> "FloxConfig":
         with open(path, "r") as f:
             data = yaml.safe_load(f)
         return cls(**data)
