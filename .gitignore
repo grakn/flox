@@ -1,0 +1,6 @@
+.gitconfig
+.venv/
+__pycache__/
+flox.egg-info/
+build/
+.pytest_cache/

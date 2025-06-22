@@ -1,0 +1,8 @@
+service: gazile
+environment: staging
+log_level: DEBUG
+projects:
+  tenantA:
+    projectX:
+      model_path: "/models/tenantA/projectX"
+      index_path: "/index/tenantA/projectX"

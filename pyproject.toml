@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flox"
+version = "0.1.0"
+description = "Async-ready context and logging manager for multi-tenant services"
+authors = [
+  { name="Phragman", email="a@staphi.com" }
+]
+readme = "README.md"
+license = { text = "MIT" }
+dependencies = [
+  "pydantic>=1.10.0,<3",
+  "structlog>=23.1.0",
+  "python-json-logger>=2.0.0",
+  "pyyaml>=6.0"
+]
+requires-python = ">=3.9"
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+]
+
+[project.scripts]
+flox = "flox.cli:cli"
