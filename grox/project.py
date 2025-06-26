@@ -1,7 +1,8 @@
 from typing import Dict, Any
-from .config import GroxAppConfig, GroxProjectConfig
-from langfabric import ModelManager
 from types import SimpleNamespace
+from langfabric import ModelManager
+from .config import GroxAppConfig, GroxProjectConfig
+from .factory import build_checkpoint_saver
 
 class GroxProject:
 
@@ -13,3 +14,11 @@ class GroxProject:
         self.config = config
         self.model_manager = ModelManager(config.infrastructure.model_configs)
         self.defaults = SimpleNamespace(**config.infrastructure.defaults)
+
+        self.checkpoint_saver = None
+
+        backend_configs = config.infrastructure.backend_configs or {}
+        checkpoint_cfg = backend_configs.get("checkpoint_saver")
+
+        if checkpoint_cfg:
+            self.checkpoint_saver = build_checkpoint_saver(self.tenant_id, self.project_code, checkpoint_cfg)

@@ -1,0 +1,13 @@
+- name: checkpoint_saver
+  backend: redis
+  ttl: 2d
+  url: !secret redis_endpoint
+
+- name: chat_history
+  backend: redis
+  ttl: 2d
+  url: !secret redis_endpoint
+
+- name: vector_store
+  backend: redis
+  url: !secret redis_endpoint

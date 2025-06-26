@@ -2,6 +2,7 @@
   provider: ollama
   model: gemma3:12b
   max_tokens: 4096
+  
 - name: deepseek-r1
   provider: ollama
   model: deepseek-r1:latest

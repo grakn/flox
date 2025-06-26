@@ -36,6 +36,15 @@ class InfrastructureConfig(BaseModel):
     models: Optional[List[str]] = Field(default_factory=list)
     model_configs: Optional[dict] = None
     defaults: Optional[dict] = Field(default_factory=dict)
+    backends: Optional[List[str]] = Field(default_factory=list)
+    backend_configs: Optional[dict] = None
+
+# === Backends (as named collection) ===
+class BackendConfig(BaseModel):
+    name: str
+    backend: str
+    url: SecretStr = None
+    ttl: Optional[str] = None
 
 # === Project Config ===
 class GroxProjectConfig(BaseModel):
@@ -55,8 +64,35 @@ class GroxProjectConfig(BaseModel):
             if "models" in infra:
                 model_paths = [
                     str((base_dir / model_path).resolve())
-                    for model_path in infra.get("models", {})
+                    for model_path in infra.get("models", [])
                 ]
                 infra["model_configs"] = load_model_configs(model_paths, secrets=secrets)
+            if "backends" in infra:
+                backend_paths = [
+                    str((base_dir / backend_path).resolve())
+                    for backend_path in infra.get("backends", [])
+                ]
+                infra["backend_configs"] = load_backend_configs(backend_paths, secrets=secrets)
 
         return cls(**root)
+
+
+def load_backend_configs(paths: List[str], secrets: dict = None) -> Dict[str, BackendConfig]:
+    configs: Dict[str, BackendConfig] = {}
+
+    for path in paths:
+        full_path = Path(path).resolve()
+        raw = load_seyaml(full_path, secrets)
+
+        if not isinstance(raw, list):
+            raise ValueError(f"{full_path} must contain a list at the top level")
+
+        for item in raw:
+            if not isinstance(item, dict):
+                raise ValueError(f"Each backend entry must be a mapping")
+            if "name" not in item:
+                raise ValueError("Each backend config must include a 'name' field")
+            config = BackendConfig(**item)
+            configs[config.name] = config
+
+    return configs
