@@ -18,8 +18,12 @@ pip install grox
 
 ## For development
 
+Poetry
 ```
 poetry install --extras "test"
-or
+```
+
+PIP
+```
 pip3 install ".[test]"
 ```
