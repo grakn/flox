@@ -1,5 +1,5 @@
-service: app_name
-environment: staging
+service: basic-app
+environment: dev
 log_level: DEBUG
 tenants:
   tenantA:

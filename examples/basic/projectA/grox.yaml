@@ -9,4 +9,4 @@ infrastructure:
     - "models.yaml"
   defaults:
     chat_model: gemma3
-    embedding_model: gemma3
+    embedding_model: nomic-embed-text

@@ -26,10 +26,11 @@ class GroxExecutionContext:
         for key, value in project.__dict__.items():
             if not key.startswith("_"):
                 setattr(self, key, value)
-                
+
         if not input:
             input = {}
         self.input = input
+
         self.correlation_id = correlation_id
         self.user_id = user_id
 

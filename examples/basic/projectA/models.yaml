@@ -1,0 +1,10 @@
+# Self-hosted chat model
+- name: gemma3
+  provider: ollama
+  model: gemma3:12b
+  max_tokens: 4096
+
+# Self-hosted embedding model
+- name: nomic-embed-text
+  provider: ollama
+  model: nomic-embed-text

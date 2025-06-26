@@ -15,7 +15,7 @@ setup(
         "pyyaml>=6.0",
         "click>=8.0",
         "jinja2",
-        "langfabric (>=0.1.6,<0.2.0)",
+        "langfabric (>=0.1.8,<0.2.0)",
         "seyaml>=0.1.1,<1.0",
     ],
     entry_points={
