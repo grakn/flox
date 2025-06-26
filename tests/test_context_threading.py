@@ -21,7 +21,7 @@ import pytest
 
 from grox.context import GroxContext, GroxExecutionContext
 from grox.project import GroxProject
-from grox.config import GroxAppConfig, GroxProjectMetadata, GroxProjectConfig
+from grox.config import GroxAppConfig, ProjectMetadata, GroxProjectConfig
 
 # ---------- helpers ----------------------------------------------------------
 
@@ -67,7 +67,7 @@ def test_context_is_thread_local(tmp_path, num_threads):
     for i in range(num_threads):
         tenant = f"tenant_{i}"
         project = f"proj_{i}"
-        metadata = GroxProjectMetadata(title=f"{tenant}:{project}", project=project)
+        metadata = ProjectMetadata(title=f"{tenant}:{project}", project=project)
         cfg = GroxProjectConfig(version="1.0.0", metadata=metadata)
         grox_ctx.register_project(GroxProject(tenant, project, config=cfg))
 

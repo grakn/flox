@@ -14,7 +14,9 @@ setup(
         "python-json-logger>=2.0.0",
         "pyyaml>=6.0",
         "click>=8.0",
-        "jinja2"
+        "jinja2",
+        "langfabric (>=0.1.6,<0.2.0)",
+        "seyaml>=0.1.1,<1.0",
     ],
     entry_points={
         "console_scripts": ["grox = grox.cli:cli"]
@@ -22,7 +24,7 @@ setup(
     package_data={
         "grox.templates": ["*.j2"]
     },
-    python_requires=">=3.11",
+    python_requires=">=3.11,<4.0",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

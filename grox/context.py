@@ -16,26 +16,53 @@ class GroxExecutionContext:
                 input: dict = None,
                 correlation_id: Optional[str] = None,
                 user_id: Optional[str] = None):
-        self.project = project
+        """
+        project - essential reference to the initialized project
+        input - could be the incoming request or other initial channel payload
+        correlation_id usually comes from request headers
+        user_id usially comes from auth components
+        """
+        # Copy all project attributes into self
+        for key, value in project.__dict__.items():
+            if not key.startswith("_"):
+                setattr(self, key, value)
         if not input:
             input = {}
         self.input = input
         self.correlation_id = correlation_id
         self.user_id = user_id
-        self.logger = structlog.get_logger().bind(
-            tenant_id=project.tenant_id,
-            project_code=project.project_code,
-            correlation_id=correlation_id,
-            user_id=user_id,
-        )
 
+        logger_metadata = {
+            "tenant_id": project.tenant_id,
+            "project_code": project.project_code,
+            "correlation_id": correlation_id,
+            "user_id": user_id,
+            "service": project.app.service,
+            "version": project.app.version,
+            "environment": project.app.environment,
+        }
 
+        # Filter out None values
+        filtered_metadata = {k: v for k, v in logger_metadata.items() if v is not None}
+
+        # Bind to logger
+        self.logger = structlog.get_logger().bind(**filtered_metadata)
+
+        if self.debug:
+            self.logger.debug("available context properties", data=self.__dict__.keys())
+
+"""
+Singelton instance that could be created with GroxAppConfig on startup
+"""
 class GroxContext:
     _instance = None
     _instance_lock = threading.Lock()
     _context_var = contextvars.ContextVar("grox_current_context")
 
     def __new__(cls, app: GroxAppConfig=None):
+        """
+        The first call should be with non null app instance
+        """
         if cls._instance is None:
             with cls._instance_lock:
                 if cls._instance is None:
@@ -46,6 +73,7 @@ class GroxContext:
     def __init_singleton__(self, app: GroxAppConfig = None):
         """Initialize singleton only once"""
         if not app:
+            # this is a fallback, but we expect non null config for the first call
             app = GroxAppConfig()
 
         self._projects = {}
@@ -55,6 +83,7 @@ class GroxContext:
         # Automatically setup logging
         setup_logging(app.log_level)
         if app.log_callback:
+            # register log callback if needed
             register_log_callback(app.log_callback)
 
     def register_all_projects(self):

@@ -1,11 +1,15 @@
 from pydantic import BaseModel, Field, SecretStr
 from typing import Literal, List, Dict, Any, Optional, Callable, Union
+from pathlib import Path
 import yaml
+from seyaml import load_seyaml
+from langfabric import load_model_configs
 
 # === Grox ===
 class GroxAppConfig(BaseModel):
     service: str = "grox"
-    environment: str = "production"
+    version: Optional[str] = None
+    environment: Optional[str] = None
     log_level: str = "INFO"
     log_callback: Optional[Callable[[dict], None]] = None
     tenants: Dict[str, List[str]] = Field(default_factory=dict)
@@ -21,19 +25,38 @@ class GroxAppConfig(BaseModel):
             yaml.safe_dump(self.dict(), f)
 
 # === Metadata ===
-class GroxProjectMetadata(BaseModel):
+class ProjectMetadata(BaseModel):
     title: str
     description: Optional[str] = None
     project: str
     workspace: str = "default"
 
+# === Infrastructure ===
+class InfrastructureConfig(BaseModel):
+    models: Optional[List[str]] = Field(default_factory=list)
+    model_configs: Optional[dict] = None
+    defaults: Optional[dict] = Field(default_factory=dict)
+
 # === Project Config ===
 class GroxProjectConfig(BaseModel):
     version: Literal["1.0.0"]
-    metadata: GroxProjectMetadata
+    metadata: ProjectMetadata
+    infrastructure: Optional[InfrastructureConfig] = None
 
     @classmethod
-    def load_yaml(cls, path: str) -> "GroxProjectConfig":
-        with open(path, "r") as f:
-            data = yaml.safe_load(f)
-        return cls(**data)
+    def load_yaml(cls, path: str, secrets: dict = None) -> "GroxProjectConfig":
+        abs_path = Path(path).resolve()
+        base_dir = abs_path.parent
+
+        root = load_seyaml(abs_path, secrets)
+
+        if "infrastructure" in root:
+            infra = root["infrastructure"]
+            if "models" in infra:
+                model_paths = [
+                    str((base_dir / model_path).resolve())
+                    for model_path in infra.get("models", {})
+                ]
+                infra["model_configs"] = load_model_configs(model_paths, secrets=secrets)
+
+        return cls(**root)

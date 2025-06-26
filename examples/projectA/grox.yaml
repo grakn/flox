@@ -4,3 +4,9 @@ metadata:
   description: Template of the project
   project: project_a
   workspace: default
+infrastructure:
+  models:
+    - "models.yaml"
+  defaults:
+    chat_model: gemma3
+    embedding_model: gemma3
