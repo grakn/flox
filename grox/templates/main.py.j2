@@ -1,0 +1,25 @@
+from grox import GroxAppConfig, GroxProjectConfig, GroxContext, GroxRequestContext, GroxProject, Grox
+
+async def main():
+    tenant_id = "tenant-A"
+
+    app = GroxAppConfig(service="grox-app")
+    GroxContext(app)
+
+    cfg = GroxProjectConfig.load_yaml("./grox.yaml")
+    project = GroxProject(tenant_id, app, cfg)
+
+    # the same as GroxContext()
+    GroxContext().register_project(project)
+
+    ctx = GroxContext().create_request_context(
+        tenant_id=tenant_id,
+        project_code="{{ project_code }}",
+        correlation_id="sample-correlation-id"
+    )
+    grox = Grox(ctx)
+    grox.logger.info("project started")
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())

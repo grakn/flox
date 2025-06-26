@@ -1,30 +1,26 @@
 import asyncio
-from flox.config import FloxConfig
-from flox.context import FloxContext
-from flox.projects import Project
-from flox.flox import Flox
+from grox import *
 
 async def main():
-    config = FloxConfig.load_yaml("flox.yaml")
-
-    flox_ctx = FloxContext(config)
-
-    # Register some projects
-    for tenant_id, projects in config.projects.items():
-        for project_code, proj_conf in projects.items():
-            project = Project(tenant_id=tenant_id, project_code=project_code, config=proj_conf)
-            flox_ctx.register_project(project)
+    app = GroxAppConfig.load_yaml("app.yaml")
+    # first call should be with app
+    GroxContext(app).register_all_projects()
 
     # Create per-request context
-    ctx = flox_ctx.create_request_context(
+    ctx = GroxContext().create_request_context(
         tenant_id="tenantA",
-        project_code="projectX",
+        project_code="project_a",
+        request = {
+            "param1": "1",
+            "param2": "2"
+        },
         correlation_id="corr-1234",
         user_id="user-5678"
     )
 
-    flox = Flox(ctx)
-    await flox.handle_event({"some": "data"})
+    # create Grox graph system
+    grox = Grox(ctx)
+    await grox.handle_event({"some": "data"})
 
 if __name__ == "__main__":
     asyncio.run(main())

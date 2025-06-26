@@ -2,7 +2,6 @@ import logging
 import sys
 import structlog
 from typing import Callable, Optional
-from .config import FloxConfig
 
 # This will hold the callback if registered
 _log_callback_handler: Optional[Callable[[dict], None]] = None
@@ -20,9 +19,9 @@ def _callback_processor(logger, method_name, event_dict):
             logger.warning("log_callback_failed", error=str(e))
     return event_dict
 
-def setup_logging(config: FloxConfig):
+def setup_logging(log_level: str):
     logging.basicConfig(
-        level=config.log_level,
+        level=log_level,
         stream=sys.stdout,
         format="%(message)s",  # Let structlog render JSON
     )

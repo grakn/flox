@@ -1,10 +1,10 @@
-# Flox
+# Grox
 
-**Flox** is a lightweight async-ready Python library for building multi-tenant, project-scoped services with structured logging, request correlation, and centralized configuration.
+**Grox** is a lightweight async-ready Python library for building multi-tenant, project-scoped services with structured logging, request correlation, and centralized configuration.
 
 ## ✨ Features
 
-- Singleton `FloxContext` with thread-safe project registration
+- Singleton `GroxContext` with thread-safe project registration
 - `Context` object per request (with `tenant_id` and `project_code`)
 - Per-request correlation ID and user-scoped structured logging via `structlog`
 - YAML-based config loading with Pydantic
@@ -13,7 +13,7 @@
 ## 🛠️ Installation
 
 ```
-pip install flox
+pip install grox
 ```
 
 ## For development

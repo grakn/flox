@@ -5,28 +5,28 @@ import shutil
 import os
 import sys
 import importlib.util
-from flox.config import FloxConfig
-from flox.logger import setup_logging
-from flox.context import FloxContext
-from flox.projects import Project
+from grox.config import GroxAppConfig, GroxProjectConfig
+from grox.logger import setup_logging
+from grox.context import GroxContext, GroxRequestContext
+from grox.project import GroxProject
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 env = Environment(
-    loader=PackageLoader("flox", "templates"),
+    loader=PackageLoader("grox", "templates"),
     autoescape=select_autoescape(["j2"])
 )
 
 @click.group()
 def cli():
-    """Flox CLI: project lifecycle manager"""
+    """Grox CLI: project lifecycle manager"""
     pass
 
 @cli.command()
 @click.argument("project_code")
 @click.option("--path", "-p", default=".", help="Target directory for the project")
 def create(project_code: str, path: str):
-    """Create a new flox project in the given directory."""
+    """Create a new grox project in the given directory."""
     target_dir = Path(path) / project_code
 
     if target_dir.exists():
@@ -45,8 +45,8 @@ def create(project_code: str, path: str):
     (target_dir / "main.py").write_text(
         env.get_template("main.py.j2").render(**ctx)
     )
-    (target_dir / "flox.yaml").write_text(
-        env.get_template("flox.yaml.j2").render(**ctx)
+    (target_dir / "grox.yaml").write_text(
+        env.get_template("grox.yaml.j2").render(**ctx)
     )
 
     click.echo(f"✅ Project '{project_code}' created at {target_dir}")
@@ -56,17 +56,17 @@ def create(project_code: str, path: str):
 @click.argument("project_code")
 @click.option("--path", "-p", default=".", help="Project directory (defaults to current dir)")
 def run(project_code: str, path: str):
-    """Run the given flox project (calls main.py in the project folder)."""
+    """Run the given grox project (calls main.py in the project folder)."""
     project_dir = Path(path) / project_code
     main_path = project_dir / "main.py"
-    config_path = project_dir / "flox.yaml"
+    config_path = project_dir / "grox.yaml"
 
     if not main_path.exists():
         click.echo(f"❌ main.py not found in {project_dir}")
         sys.exit(1)
 
     if not config_path.exists():
-        click.echo(f"❌ flox.yaml not found in {project_dir}")
+        click.echo(f"❌ grox.yaml not found in {project_dir}")
         sys.exit(1)
 
     sys.path.insert(0, str(project_dir))

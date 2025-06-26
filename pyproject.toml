@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "flox"
+name = "grox"
 version = "0.1.0"
 description = "Async-ready context and logging manager for multi-tenant services"
 authors = [
@@ -16,7 +16,8 @@ dependencies = [
   "structlog>=23.1.0",
   "python-json-logger>=2.0.0",
   "pyyaml>=6.0",
-  "jinja2"
+  "click>=8.0",
+  "jinja2",
 ]
 requires-python = ">=3.11"
 
@@ -26,7 +27,7 @@ test = [
 ]
 
 [project.scripts]
-flox = "flox.cli:cli"
+grox = "grox.cli:cli"
 
 [tool.setuptools.package-data]
-"flox.templates" = ["*.j2"]
+"grox.templates" = ["*.j2"]

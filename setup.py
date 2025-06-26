@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="flox",
+    name="grox",
     version="0.1.0",
     description="Async-ready context and logging manager for multi-tenant services",
     author="Phragman",
@@ -13,13 +13,14 @@ setup(
         "structlog>=23.1.0",
         "python-json-logger>=2.0.0",
         "pyyaml>=6.0",
+        "click>=8.0",
         "jinja2"
     ],
     entry_points={
-        "console_scripts": ["flox = flox.cli:cli"]
+        "console_scripts": ["grox = grox.cli:cli"]
     },
     package_data={
-        "flox.templates": ["*.j2"]
+        "grox.templates": ["*.j2"]
     },
     python_requires=">=3.11",
     classifiers=[

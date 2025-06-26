@@ -1,0 +1,6 @@
+service: app_name
+environment: staging
+log_level: DEBUG
+tenants:
+  tenantA:
+    - "projectA/glox.yaml"

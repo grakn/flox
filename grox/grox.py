@@ -1,15 +1,15 @@
 from typing import Optional
 import structlog
-from .context import Context
+from .context import GroxRequestContext
 
-class Flox:
+class Grox:
     """
     Per-request action class holding the active flows and executions
     """
 
     def __init__(
         self,
-        context: Context
+        context: GroxRequestContext
     ):
         self.context = context
         self.logger = context.logger
