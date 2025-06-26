@@ -19,7 +19,7 @@ import uuid
 
 import pytest
 
-from grox.context import GroxContext, GroxRequestContext
+from grox.context import GroxContext, GroxExecutionContext
 from grox.project import GroxProject
 from grox.config import GroxAppConfig, GroxProjectMetadata, GroxProjectConfig
 
@@ -40,13 +40,13 @@ def _worker(
     correlation_id = str(uuid.uuid4())
 
     # Set per-thread context
-    ctx_singleton.create_request_context(
+    ctx_singleton.create_execution_context(
         tenant_id=tenant_id,
         project_code=project_code,
         correlation_id=correlation_id,
     )
 
-    read_ctx: GroxRequestContext | None = GroxContext.get_current_context()
+    read_ctx: GroxExecutionContext | None = GroxContext.get_current_context()
     results[index] = (
         read_ctx.project.tenant_id,
         read_ctx.project.project_code,

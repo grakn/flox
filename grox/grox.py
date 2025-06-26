@@ -1,6 +1,6 @@
 from typing import Optional
 import structlog
-from .context import GroxRequestContext
+from .context import GroxExecutionContext
 
 class Grox:
     """
@@ -9,7 +9,7 @@ class Grox:
 
     def __init__(
         self,
-        context: GroxRequestContext
+        context: GroxExecutionContext
     ):
         self.context = context
         self.logger = context.logger

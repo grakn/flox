@@ -6,20 +6,20 @@ from .config import GroxAppConfig, GroxProjectConfig
 from .project import GroxProject
 from .logger import setup_logging, register_log_callback
 
-class GroxRequestContext:
+class GroxExecutionContext:
     """
     Per-request container holding the active Project plus
     request identifiers and infrastructure references
     """
 
     def __init__(self, project: GroxProject,
-                request: dict = None,
+                input: dict = None,
                 correlation_id: Optional[str] = None,
                 user_id: Optional[str] = None):
         self.project = project
-        if not request:
-            request = {}
-        self.request = request
+        if not input:
+            input = {}
+        self.input = input
         self.correlation_id = correlation_id
         self.user_id = user_id
         self.logger = structlog.get_logger().bind(
@@ -33,7 +33,7 @@ class GroxRequestContext:
 class GroxContext:
     _instance = None
     _instance_lock = threading.Lock()
-    _context_var = contextvars.ContextVar("grox_request_context")
+    _context_var = contextvars.ContextVar("grox_current_context")
 
     def __new__(cls, app: GroxAppConfig=None):
         if cls._instance is None:
@@ -83,18 +83,18 @@ class GroxContext:
         with self._projects_lock:
             return list(self._projects.keys())
 
-    def create_request_context(
+    def create_execution_context(
         self,
         tenant_id: str,
         project_code: str,
-        request: Optional[dict] = None,
+        input: Optional[dict] = None,
         correlation_id: Optional[str] = None,
         user_id: Optional[str] = None,
-    ) -> GroxRequestContext:
+    ) -> GroxExecutionContext:
         project = self.get_project(tenant_id, project_code)
         if project is None:
             raise RuntimeError(f"GroxProject not found: {tenant_id}/{project_code}")
-        ctx = GroxRequestContext(project=project, request=request, correlation_id=correlation_id, user_id=user_id)
+        ctx = GroxExecutionContext(project=project, input=input, correlation_id=correlation_id, user_id=user_id)
         self._context_var.set(ctx)
         return ctx
 
@@ -106,7 +106,7 @@ class GroxContext:
             return GroxContext._instance
 
     @staticmethod
-    def get_current_context() -> Optional[GroxRequestContext]:
+    def get_current_context() -> Optional[GroxExecutionContext]:
         try:
             return GroxContext._context_var.get()
         except LookupError:

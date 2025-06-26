@@ -1,4 +1,4 @@
-from grox import GroxAppConfig, GroxProjectConfig, GroxContext, GroxRequestContext, GroxProject, Grox
+from grox import GroxAppConfig, GroxProjectConfig, GroxContext, GroxExecutionContext, GroxProject, Grox
 
 async def main():
     tenant_id = "tenant-A"
@@ -12,7 +12,7 @@ async def main():
     # the same as GroxContext()
     GroxContext().register_project(project)
 
-    ctx = GroxContext().create_request_context(
+    ctx = GroxContext().create_execution_context(
         tenant_id=tenant_id,
         project_code="{{ project_code }}",
         correlation_id="sample-correlation-id"

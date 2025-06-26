@@ -7,7 +7,7 @@ import sys
 import importlib.util
 from grox.config import GroxAppConfig, GroxProjectConfig
 from grox.logger import setup_logging
-from grox.context import GroxContext, GroxRequestContext
+from grox.context import GroxContext, GroxExecutionContext
 from grox.project import GroxProject
 
 from jinja2 import Environment, PackageLoader, select_autoescape

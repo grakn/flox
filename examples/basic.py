@@ -7,10 +7,10 @@ async def main():
     GroxContext(app).register_all_projects()
 
     # Create per-request context
-    ctx = GroxContext().create_request_context(
+    ctx = GroxContext().create_execution_context(
         tenant_id="tenantA",
         project_code="project_a",
-        request = {
+        input = {
             "param1": "1",
             "param2": "2"
         },

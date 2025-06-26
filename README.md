@@ -1,11 +1,11 @@
 # Grox
 
-**Grox** is a lightweight async-ready Python library for building multi-tenant, project-scoped services with structured logging, request correlation, and centralized configuration.
+**Grox** is a lightweight async-ready Python library for building multi-tenant AI agents, project-scoped services with graph orchestrated LLM execution flows, structured logging, request correlation, and centralized configuration.
 
 ## ✨ Features
 
 - Singleton `GroxContext` with thread-safe project registration
-- `Context` object per request (with `tenant_id` and `project_code`)
+- `GroxExecutionContext` object per request/input (with `tenant_id` and `project_code`)
 - Per-request correlation ID and user-scoped structured logging via `structlog`
 - YAML-based config loading with Pydantic
 - Clean separation between global project data and per-request logic
