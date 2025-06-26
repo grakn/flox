@@ -43,6 +43,7 @@ class InfrastructureConfig(BaseModel):
 class BackendConfig(BaseModel):
     name: str
     backend: str
+    sync: bool = False
     url: SecretStr = None
     ttl: Optional[str] = None
 
