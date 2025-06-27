@@ -4,7 +4,7 @@ from langfabric import ModelManager, build_embeddings
 from langgraph.graph import StateGraph, START, END
 from operator import add
 
-from .config import GroxAppConfig, GroxProjectConfig
+from .config import GroxAppConfig, GroxProjectConfig, DefaultsConfig
 from .factory import build_checkpoint_saver, build_chat_history_factory
 from .state import GroxState
 
@@ -32,13 +32,15 @@ class GroxProject:
     def _initialize_models(self):
         infra = self.config.infrastructure
 
+        self.embeddings = None
+
         if not infra:
             self.model_manager = ModelManager({})
-            self.embeddings = None
+            self.defaults = DefaultsConfig()
             return
 
         self.model_manager = ModelManager(infra.model_configs)
-        self.defaults = infra.defaults or {}
+        self.defaults = infra.defaults or DefaultsConfig()
 
         if self.defaults.chat_model:
             if not infra.model_configs.get(self.defaults.chat_model):
@@ -49,7 +51,6 @@ class GroxProject:
             return
 
         if not self.defaults.embedding_model:
-            self.embeddings = None
             return
 
         model_config = infra.model_configs.get(self.defaults.embedding_model)
@@ -61,7 +62,15 @@ class GroxProject:
 
         self.embeddings = build_embeddings(model_config)
 
+    @staticmethod
+    def _null_chat_history_factory(session_id: str) -> Any:
+        return None
+
     def _initialize_backends(self):
+
+        self.checkpoint_saver = None
+        self.chat_history_factory = self._null_chat_history_factory
+
         infra = self.config.infrastructure
         if not infra:
             return
