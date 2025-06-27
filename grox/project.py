@@ -1,8 +1,20 @@
 from typing import Dict, Any
 from types import SimpleNamespace
-from langfabric import ModelManager
+from langfabric import ModelManager, build_embeddings
+from langgraph.graph import StateGraph, START, END
+from operator import add
+
 from .config import GroxAppConfig, GroxProjectConfig
 from .factory import build_checkpoint_saver, build_chat_history_factory
+from .state import GroxState
+
+# Define your nodes
+def node_a(state: GroxState) -> GroxState:
+    return {"foo": "a", "bar": ["a"]}
+
+def node_b(state: GroxState) -> GroxState:
+    return {"foo": "b", "bar": ["b"]}
+
 
 class GroxProject:
 
@@ -13,29 +25,58 @@ class GroxProject:
         self.config = config
         self.project_code = config.metadata.project
 
-        # initialize models
-        if config.infrastructure:
-            # initialize model manager and default models
-            self.model_manager = ModelManager(config.infrastructure.model_configs)
-            self.defaults = SimpleNamespace(**config.infrastructure.defaults)
-        else:
-            self.model_manager = ModelManager(dict())
-            self.defaults = SimpleNamespace()
+        self._initialize_models()
+        self._initialize_backends()
+        self._initialize_workflow()
 
-        # initialize backends
-        self.checkpoint_saver = None
-        def null_chat_history_factory(session_id: str):
-            return None
-        self.chat_history_factory = null_chat_history_factory
+    def _initialize_models(self):
+        infra = self.config.infrastructure
 
-        if config.infrastructure:
-            # initialize backends
-            backend_configs = config.infrastructure.backend_configs or {}
+        if not infra:
+            self.model_manager = ModelManager({})
+            self.embeddings = None
+            return
 
-            checkpoint_cfg = backend_configs.get("checkpoint_saver")
-            if checkpoint_cfg:
-                self.checkpoint_saver = build_checkpoint_saver(checkpoint_cfg)
+        self.model_manager = ModelManager(infra.model_configs)
+        self.defaults = infra.defaults or {}
 
-            history_cfg = backend_configs.get("chat_history")
-            if history_cfg:
-                self.chat_history_factory = build_chat_history_factory(self.tenant_id, self.project_code, history_cfg)
+        embedding_model_name = self.defaults.get("embedding_model")
+        if not embedding_model_name:
+            self.embeddings = None
+            return
+
+        model_config = infra.model_configs.get(embedding_model_name)
+        if not model_config:
+            raise ValueError(
+                f"Embedding model '{embedding_model_name}' not found for "
+                f"{self.tenant_id}:{self.project_code}"
+            )
+
+        self.embeddings = build_embeddings(model_config)
+
+    def _initialize_backends(self):
+        infra = self.config.infrastructure
+        if not infra:
+            return
+
+        backend_configs = infra.backend_configs or {}
+
+        checkpoint_cfg = backend_configs.get("checkpoint_saver")
+        if checkpoint_cfg:
+            self.checkpoint_saver = build_checkpoint_saver(checkpoint_cfg)
+
+        chat_history_cfg = backend_configs.get("chat_history")
+        if chat_history_cfg:
+            self.chat_history_factory = build_chat_history_factory(
+                self.tenant_id, self.project_code, chat_history_cfg
+            )
+
+    def _initialize_workflow(self):
+        self.workflow = StateGraph(GroxState)
+        self.workflow.add_node("node_a", node_a)
+        self.workflow.add_node("node_b", node_b)
+        self.workflow.add_edge(START, "node_a")
+        self.workflow.add_edge("node_a", "node_b")
+        self.workflow.add_edge("node_b", END)
+
+        self.graph = self.workflow.compile(checkpointer=self.checkpoint_saver)

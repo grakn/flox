@@ -126,8 +126,11 @@ class GroxContext:
         if project is None:
             raise RuntimeError(f"GroxProject not found: {tenant_id}/{project_code}")
         ctx = GroxExecutionContext(project=project, input=input, correlation_id=correlation_id, user_id=user_id)
-        self._context_var.set(ctx)
+        self.register_execution_context(ctx)
         return ctx
+
+    def register_execution_context(self, ctx: GroxExecutionContext):
+        self._context_var.set(ctx)
 
     @staticmethod
     def get_instance() -> "GroxContext":
