@@ -32,10 +32,14 @@ class ProjectMetadata(BaseModel):
     workspace: str = "default"
 
 # === Infrastructure ===
+class DefaultsConfig(BaseModel):
+    chat_model: Optional[str] = None
+    embedding_model: Optional[str] = None
+
 class InfrastructureConfig(BaseModel):
     models: Optional[List[str]] = Field(default_factory=list)
     model_configs: Optional[dict] = None
-    defaults: Optional[dict] = Field(default_factory=dict)
+    defaults: Optional[DefaultsConfig] = None
     backends: Optional[List[str]] = Field(default_factory=list)
     backend_configs: Optional[dict] = None
 

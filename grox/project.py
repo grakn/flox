@@ -40,15 +40,22 @@ class GroxProject:
         self.model_manager = ModelManager(infra.model_configs)
         self.defaults = infra.defaults or {}
 
-        embedding_model_name = self.defaults.get("embedding_model")
-        if not embedding_model_name:
+        if self.defaults.chat_model:
+            if not infra.model_configs.get(self.defaults.chat_model):
+                raise ValueError(
+                    f"Chat model '{self.defaults.chat_model}' not found for "
+                    f"{self.tenant_id}:{self.project_code}"
+                )
+            return
+
+        if not self.defaults.embedding_model:
             self.embeddings = None
             return
 
-        model_config = infra.model_configs.get(embedding_model_name)
+        model_config = infra.model_configs.get(self.defaults.embedding_model)
         if not model_config:
             raise ValueError(
-                f"Embedding model '{embedding_model_name}' not found for "
+                f"Embedding model '{self.defaults.embedding_model}' not found for "
                 f"{self.tenant_id}:{self.project_code}"
             )
 
