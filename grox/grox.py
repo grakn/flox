@@ -18,6 +18,7 @@ def node_a(state: GroxState) -> GroxState:
 def node_b(state: GroxState) -> GroxState:
     return {"foo": "b", "bar": ["b"]}
 
+THREAD_ID_SEPARATOR: str = ":"
 
 class Grox:
     """
@@ -42,11 +43,14 @@ class Grox:
         # Compile the graph with the checkpointer
         self.graph = self.workflow.compile(checkpointer=context.checkpoint_saver)
 
+    def _make_thread_id(self, session_id: str) -> str:
+        return f"{self.context.tenant_id}{THREAD_ID_SEPARATOR}{self.context.project_code}{THREAD_ID_SEPARATOR}{session_id}"
+
     async def handle_event(self, data: dict):
         # Invoke the graph with a thread_id
         self.logger.info("event_received", data=data)
-        config = {"configurable": {"thread_id": data["thread_id"]}}
-        result = self.graph.invoke({"foo": ""}, config)
+        config = {"configurable": {"thread_id": self._make_thread_id(data["session_id"])}}
+        result = await self.graph.ainvoke({"foo": ""}, config)
         await self._process(result)
 
     async def _process(self, data: dict):

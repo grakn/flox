@@ -2,9 +2,15 @@ import asyncio
 from grox import *
 
 async def main():
+
+    secrets = {
+        # this parameter in secrets, because in production url can have password
+        "redis_endpoint": "redis://localhost:6379/0",
+    }
+
     app = GroxAppConfig.load_yaml("app.yaml")
     # first call should be with app
-    GroxContext(app).register_all_projects()
+    GroxContext(app).register_all_projects(secrets)
 
     # GroxContext - is the global context, you should additionally
     # Create per-request/per-execution context
@@ -21,8 +27,8 @@ async def main():
 
     # create Grox graph system that would serve the stream of Agents
     grox = Grox(ctx)
-    await grox.handle_event({"thread_id": "1"})
-    await grox.handle_event({"thread_id": "1"})
+    await grox.handle_event({"session_id": "1"})
+    await grox.handle_event({"session_id": "1"})
 
 if __name__ == "__main__":
     asyncio.run(main())

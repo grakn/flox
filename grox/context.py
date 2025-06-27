@@ -88,11 +88,11 @@ class GroxContext:
             # register log callback if needed
             register_log_callback(app.log_callback)
 
-    def register_all_projects(self):
+    def register_all_projects(self, secrets: dict = None):
         for tenant_id, project_paths in self.app.tenants.items():
             for project_path in project_paths:
-                cfg = GroxProjectConfig.load_yaml(project_path)
-                project = GroxProject(tenant_id, self.app, cfg)
+                cfg = GroxProjectConfig.load_yaml(project_path, secrets=secrets)
+                project = GroxProject(self.app, tenant_id, cfg)
                 self.register_project(project)
 
     def register_project(self, project: GroxProject):

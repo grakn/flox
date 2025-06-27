@@ -7,7 +7,7 @@ async def main():
     GroxContext(app)
 
     cfg = GroxProjectConfig.load_yaml("./grox.yaml")
-    project = GroxProject(tenant_id, app, cfg)
+    project = GroxProject(app, tenant_id, cfg)
 
     # the same as GroxContext()
     GroxContext().register_project(project)

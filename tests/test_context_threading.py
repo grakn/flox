@@ -48,8 +48,8 @@ def _worker(
 
     read_ctx: GroxExecutionContext | None = GroxContext.get_current_context()
     results[index] = (
-        read_ctx.project.tenant_id,
-        read_ctx.project.project_code,
+        read_ctx.tenant_id,
+        read_ctx.project_code,
         correlation_id,
     )
 
@@ -60,8 +60,8 @@ def _worker(
 @pytest.mark.parametrize("num_threads", [8])
 def test_context_is_thread_local(tmp_path, num_threads):
     # Initialise singleton with a minimal config
-    cfg = GroxAppConfig(service="test", environment="test")
-    grox_ctx = GroxContext(cfg)
+    app = GroxAppConfig(service="test", environment="test")
+    grox_ctx = GroxContext(app)
 
     # Register one project per thread (tenant_i/project_i)
     for i in range(num_threads):
@@ -69,7 +69,7 @@ def test_context_is_thread_local(tmp_path, num_threads):
         project = f"proj_{i}"
         metadata = ProjectMetadata(title=f"{tenant}:{project}", project=project)
         cfg = GroxProjectConfig(version="1.0.0", metadata=metadata)
-        grox_ctx.register_project(GroxProject(tenant, project, config=cfg))
+        grox_ctx.register_project(GroxProject(app, tenant, cfg))
 
     # Place-holder for results coming back from threads
     results: list[tuple[str, str, str] | None] = [None] * num_threads

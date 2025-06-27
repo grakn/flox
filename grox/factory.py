@@ -1,9 +1,9 @@
 import re
 from typing import Optional
 from .config import BackendConfig
-from .backends.memory import *
-from .backends.redis_factory import *
-from .backends.redis import *
+from langgraph.checkpoint.redis import RedisSaver, AsyncRedisSaver
+from langgraph.checkpoint.memory import MemorySaver
+from .factory_cache import *
 
 def parse_ttl(ttl: Optional[str]) -> Optional[int]:
     if not ttl:
@@ -23,29 +23,17 @@ def parse_ttl(ttl: Optional[str]) -> Optional[int]:
     }[unit]
 
 
-def build_checkpoint_saver(tenant_id:str, project_code: str, config: BackendConfig):
+def build_checkpoint_saver(config: BackendConfig):
     ttl_seconds = parse_ttl(config.ttl)
 
     if config.backend == "redis":
         if config.sync:
-            redis_client = create_redis_instance(config.url.get_secret_value())
-            return RedisCheckpointSaver(
-                tenant_id=tenant_id,
-                project_code=project_code,
-                redis_client=redis_client,
-                ttl=ttl_seconds
-            )
+            return create_redis_saver(config.url.get_secret_value(), ttl_seconds)
         else:
-            redis_client = create_async_redis_instance(config.url.get_secret_value())
-            return AsyncRedisCheckpointSaver(
-                tenant_id=tenant_id,
-                project_code=project_code,
-                redis_client=redis_client,
-                ttl=ttl_seconds
-            )
+            return create_async_redis_saver(config.url.get_secret_value(), ttl_seconds)
 
     elif config.backend == "memory":
-        return InMemoryCheckpointSaver(tenant_id=tenant_id, project_code=project_code)
+        return create_memory_saver()
 
     else:
         raise ValueError(f"Unsupported backend for checkpoint saver: '{config.backend}'")
