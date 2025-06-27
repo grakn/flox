@@ -1105,6 +1105,29 @@ openai = ">=1.86.0,<2.0.0"
 tiktoken = ">=0.7,<1"
 
 [[package]]
+name = "langchain-redis"
+version = "0.2.3"
+description = "An integration package connecting Redis and LangChain for AI working memory"
+optional = false
+python-versions = "<3.14,>=3.9"
+groups = ["main"]
+files = [
+    {file = "langchain_redis-0.2.3-py3-none-any.whl", hash = "sha256:c47a4e2f40f415fe626c2c1953b9199f527c83b16a4622f6a4db9acac7be9f0c"},
+    {file = "langchain_redis-0.2.3.tar.gz", hash = "sha256:6f2f6adb1790934b6fd28e3acc5d3ea0c53d1b1c76dda9187203548746ef05bb"},
+]
+
+[package.dependencies]
+anyio = ">=4.9.0,<5.0.0"
+certifi = ">=2025.4.26,<2026.0.0"
+httpcore = ">=1.0.9,<2.0.0"
+jinja2 = ">=3.1.6,<4.0.0"
+langchain-core = ">=0.3,<0.4"
+python-ulid = ">=3.0.0"
+redisvl = ">=0.6.0,<1.0.0"
+typing-extensions = ">=4.13.2,<5.0.0"
+urllib3 = ">=2.4.0,<3.0.0"
+
+[[package]]
 name = "langchain-text-splitters"
 version = "0.3.8"
 description = "LangChain text splitting utilities"
@@ -3062,4 +3085,4 @@ test = ["pytest"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.14"
-content-hash = "6e2a84890463b5494e03d08d7a5bbcba70d67a76b0211a3a7eedaeb0d4735fe5"
+content-hash = "4eab574bba64da132d2215db6f044254e6ba374d2a00dca3bfb22c5681c13495"

@@ -32,4 +32,8 @@ class Grox:
 
     async def _process(self, data: dict):
         self.logger.debug("processing_data", data=data)
+        prompt = data.get("prompt", "What is the weather today?")
+        docs = self.context.document_store.as_retrieval("weather").similarity_search_with_score(prompt)
+        self.logger.info("retrieved docs", documents=[doc.page_content for doc in docs])
+
         # Your async processing here

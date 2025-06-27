@@ -1,6 +1,7 @@
 import contextvars
 from typing import Optional
 import threading
+import traceback
 import structlog
 from .config import GroxAppConfig, GroxProjectConfig
 from .project import GroxProject
@@ -50,8 +51,7 @@ class GroxExecutionContext:
         # Bind to logger
         self.logger = structlog.get_logger().bind(**filtered_metadata)
 
-        if self.debug:
-            self.logger.debug("available context properties", data=self.__dict__.keys())
+        self.logger.debug("available context properties", data=self.__dict__.keys())
 
 """
 Singelton instance that could be created with GroxAppConfig on startup
@@ -76,6 +76,7 @@ class GroxContext:
         """Initialize singleton only once"""
         if not app:
             # this is a fallback, but we expect non null config for the first call
+            print("Warning: GroxContext initialized with empty config")
             app = GroxAppConfig()
 
         self._projects = {}
@@ -91,9 +92,13 @@ class GroxContext:
     def register_all_projects(self, secrets: dict = None):
         for tenant_id, project_paths in self.app.tenants.items():
             for project_path in project_paths:
-                cfg = GroxProjectConfig.load_yaml(project_path, secrets=secrets)
-                project = GroxProject(self.app, tenant_id, cfg)
-                self.register_project(project)
+                try:
+                    cfg = GroxProjectConfig.load_yaml(project_path, secrets=secrets)
+                    project = GroxProject(self.app, tenant_id, cfg)
+                    self.register_project(project)
+                except Exception as e:
+                    structlog.get_logger().error(f"Project init failed {e}", stack=traceback.format_exc(),tenant_id=tenant_id,project_path=project_path)
+
 
     def register_project(self, project: GroxProject):
         key = (project.tenant_id, project.project_code)

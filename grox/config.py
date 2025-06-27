@@ -4,6 +4,7 @@ from pathlib import Path
 import yaml
 from seyaml import load_seyaml
 from langfabric import load_model_configs
+from .documents.schema import Document
 
 # === Grox ===
 class GroxAppConfig(BaseModel):
@@ -15,10 +16,10 @@ class GroxAppConfig(BaseModel):
     tenants: Dict[str, List[str]] = Field(default_factory=dict)
 
     @classmethod
-    def load_yaml(cls, path: str) -> "GroxConfig":
+    def load_yaml(cls, path: str) -> "GroxAppConfig":
         with open(path, "r") as f:
             data = yaml.safe_load(f)
-        return cls(**data)
+        return GroxAppConfig.model_validate(data)
 
     def to_yaml(self, path: str):
         with open(path, "w") as f:
@@ -30,6 +31,11 @@ class ProjectMetadata(BaseModel):
     description: Optional[str] = None
     project: str
     workspace: str = "default"
+
+# === Orchestration ===
+class OrchestrationConfig(BaseModel):
+    documents: Optional[List[str]] = Field(default_factory=list)
+    document_configs: Optional[list] = None
 
 # === Infrastructure ===
 class DefaultsConfig(BaseModel):
@@ -55,6 +61,7 @@ class BackendConfig(BaseModel):
 class GroxProjectConfig(BaseModel):
     version: Literal["1.0.0"]
     metadata: ProjectMetadata
+    orchestration: Optional[OrchestrationConfig] = None
     infrastructure: Optional[InfrastructureConfig] = None
 
     @classmethod
@@ -63,6 +70,14 @@ class GroxProjectConfig(BaseModel):
         base_dir = abs_path.parent
 
         root = load_seyaml(abs_path, secrets)
+        if "orchestration" in root:
+            orch = root["orchestration"]
+            if "documents" in orch:
+                document_paths = [
+                    str((base_dir / document_path).resolve())
+                    for document_path in orch.get("documents", [])
+                ]
+                orch["documents"] = document_paths
 
         if "infrastructure" in root:
             infra = root["infrastructure"]
@@ -80,7 +95,6 @@ class GroxProjectConfig(BaseModel):
                 infra["backend_configs"] = load_backend_configs(backend_paths, secrets=secrets)
 
         return cls(**root)
-
 
 def load_backend_configs(paths: List[str], secrets: dict = None) -> Dict[str, BackendConfig]:
     configs: Dict[str, BackendConfig] = {}

@@ -1,0 +1,38 @@
+version: '0.1.0'
+
+collections:
+  - name: weather
+    index:
+      name: weather
+      prefix: weather
+      key_separator: ":"
+      storage_type: hash
+    schema:
+      fields:
+        - name: id
+          type: text
+        - name: subject
+          type: text
+        - name: content
+          type: text
+        - name: content_vector
+          type: vector
+          attrs:
+            algorithm: flat
+            dims: 1536
+            distance_metric: cosine
+            datatype: float32
+    data:
+      - documents:
+          - What's the current weather like?
+          - How's the weather today?
+          - Can you tell me the weather forecast?
+          - What's the temperature right now?
+          - What are the weather conditions?
+          - Is it sunny or rainy outside?
+          - What’s the weather situation?
+          - Do I need an umbrella today?
+          - What’s the forecast for today?
+          - How warm or cold is it outside?
+        metadata:
+          subject: weather

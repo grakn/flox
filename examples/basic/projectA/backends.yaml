@@ -9,5 +9,5 @@
   url: !secret redis_endpoint
 
 - name: vector_store
-  backend: redis
+  backend: memory
   url: !secret redis_endpoint

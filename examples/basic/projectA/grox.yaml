@@ -4,6 +4,9 @@ metadata:
   description: Template of the project
   project: project_a
   workspace: default
+orchestration:
+  documents:
+    - "documents.yaml"
 infrastructure:
   models:
     - "models.yaml"
