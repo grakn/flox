@@ -4,6 +4,24 @@ import asyncio
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.checkpoint.redis import RedisSaver, AsyncRedisSaver
 
+from langchain_core.chat_history import InMemoryChatMessageHistory
+import threading
+
+class ChatHistoryMemoryManager:
+    def __init__(self):
+        self._memory_lock = threading.Lock()
+        self._memory_buckets = {}
+
+    def get_intance(self, session_id: str) -> InMemoryChatMessageHistory:
+        with self._memory_lock:
+            if session_id not in self._memory_buckets:
+                self._memory_buckets[session_id] = InMemoryChatMessageHistory()
+            return self._memory_buckets[session_id]
+
+@lru_cache(maxsize=None)
+def create_chat_history_memory_manager(thread_id: str, project_code: str) -> ChatHistoryMemoryManager:
+    return ChatHistoryMemoryManager()
+
 @lru_cache(maxsize=None)
 def create_memory_saver() -> MemorySaver:
     return MemorySaver()

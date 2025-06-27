@@ -37,3 +37,25 @@ def build_checkpoint_saver(config: BackendConfig):
 
     else:
         raise ValueError(f"Unsupported backend for checkpoint saver: '{config.backend}'")
+
+
+def build_chat_history_factory(tenant_id:str, project_code:str, config: BackendConfig):
+    ttl_seconds = parse_ttl(config.ttl)
+
+    if config.backend == "redis":
+        redis_client = create_redis_instance(config.url.get_secret_value())
+        def _factory(session_id:str):
+            chat_history = RedisChatMessageHistory(
+                session_id,
+                redis_client=redis_client,
+                key_prefix=f"chat_history:{tenant_id}:{project_code}",
+                ttl=ttl_seconds
+            )
+            return chat_history
+        return _factory
+
+    elif config.backend == "memory":
+        return create_chat_history_memory_manager(tenant_id, project_code).get_instance
+
+    else:
+        raise ValueError(f"Unsupported backend for checkpoint saver: '{config.backend}'")
