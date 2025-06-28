@@ -5,3 +5,4 @@ grox.egg-info/
 build/
 .pytest_cache/
 .idea/
+.env
