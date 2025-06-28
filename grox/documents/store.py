@@ -97,7 +97,7 @@ class DocumentStore(abc.ABC):
         return total_indexed
 
     def get_retriever(self, collection_name: str) -> DocumentRetriever:
-        """Build a DocumentRetrieval instance for the given collection name."""
+        """Build a DocumentRetriever instance for the given collection name."""
         collection = self.find_collection(collection_name)
         if not collection:
             raise ValueError(f"Collection '{collection_name}' not found")

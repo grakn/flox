@@ -14,5 +14,5 @@ infrastructure:
     - "backends.yaml"
   defaults:
     chat_model: gemma3
-    chat_model_with_tools: gpt35-turbo
+    chat_model_with_tools: gpt4o-chat
     embedding_model: nomic-embed-text

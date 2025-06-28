@@ -34,7 +34,7 @@ class Grox:
         config = {"configurable": {"thread_id": self._make_thread_id(data["session_id"])}}
 
         async for chunk in self.context.graph.astream(inputs, config=config, stream_mode="updates"):
-            #self.print_yellow("chunk", chunk)
+            self.print("chunk", chunk)
             output_stream(chunk)
         #result = await self.context.graph.ainvoke({"foo": ""}, config)
         #await self._process(result)
