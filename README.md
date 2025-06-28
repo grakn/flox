@@ -1,7 +1,7 @@
 # Grox
 
 ![Unit Tests](https://github.com/grakn/grox/actions/workflows/ci.yaml/badge.svg?branch=main)
-[![PyPI Downloads](https://static.pepy.tech/badge/langfabric)](https://pepy.tech/projects/langfabric)
+[![PyPI Downloads](https://static.pepy.tech/badge/grox)](https://pepy.tech/projects/grox)
 
 **Grox** is a lightweight async-ready Python library for building multi-tenant AI agents, project-scoped services with graph orchestrated LLM execution flows, structured logging, request correlation, and centralized configuration.
 
