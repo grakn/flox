@@ -17,9 +17,9 @@ from .state import GroxState
 
 class GroxProject:
 
-    def __init__(self, app: GroxAppConfig, tenant_id:str, config: GroxProjectConfig):
+    def __init__(self, app: GroxAppConfig, tenant_id:str, config: GroxProjectConfig, extra_tools=None):
         self.app = app
-        self.debug = True if app.log_level == "DEBUG" else False
+        self.debug = app.log_level == "DEBUG"
         self.tenant_id = tenant_id
         self.config = config
         self.project_code = config.metadata.project
@@ -29,18 +29,25 @@ class GroxProject:
         self._initialize_backends()
         #self._initialize_workflow()
 
-        self.graph = create_react_agent(
-            self.chat_model_with_tools,
-            tools=[self.check_weather, self.document_store.tool],
-            prompt="You are a helpful assistant",
-        )
+        if hasattr(self, 'chat_model_with_tools'):
 
+            tools=[self.check_weather]
+            if hasattr(self, 'document_store'):
+                tools.append(self.document_store.tool)
 
-    @staticmethod
-    def check_weather(location: str) -> str:
+            if extra_tools:
+                tools.extend(extra_tools)
+
+            self.graph = create_react_agent(
+                self.chat_model_with_tools,
+                tools=tools,
+                prompt="You are a helpful assistant",
+            )
+
+    def check_weather(self, location: str) -> str:
         '''Return the weather forecast for the specified location.'''
-        return f"It's always sunny in {location}"
 
+        return f"It's always sunny in {location}"
 
     def _initialize_logger(self):
         logger_metadata = {
@@ -59,9 +66,6 @@ class GroxProject:
 
 
     def _initialize_models(self):
-        self.chat_model = None
-        self.chat_model_with_tools = None
-        self.embedding_model = None
 
         infra = self.config.infrastructure
         if not infra:
@@ -134,16 +138,8 @@ class GroxProject:
 
         self.embedding_model = build_embeddings(model_config)
 
-    @staticmethod
-    def _null_chat_history_factory(session_id: str) -> Any:
-        return None
-
     def _initialize_backends(self):
         self.logger.debug("_initialize_backends")
-
-        self.checkpoint_saver = None
-        self.chat_history_factory = self._null_chat_history_factory
-        self.document_store = None
 
         infra = self.config.infrastructure
         if not infra:
@@ -164,19 +160,13 @@ class GroxProject:
         vector_store_cfg = backend_configs.get("vector_store")
         if vector_store_cfg:
 
-            if not self.embedding_model:
+            if not hasattr(self, 'embedding_model'):
                 raise ValueError(
                     f"Embedding model not defined for vector store in "
                     f"{self.tenant_id}:{self.project_code}"
                 )
 
-            if not self.config.orchestration:
-                raise ValueError(
-                    f"Orchestration not defined for vector store in "
-                    f"{self.tenant_id}:{self.project_code}"
-                )
-
-            if not self.config.orchestration.documents:
+            if not self.config.orchestration or not self.config.orchestration.documents:
                 raise ValueError(
                     f"Documents not defined for vector store in "
                     f"{self.tenant_id}:{self.project_code}"
@@ -191,11 +181,15 @@ class GroxProject:
 
     def _index_documents(self, collection_name:str):
         total = self.document_store.index_documents(collection_name)
-        self.logger.info("Memory: Indexed documents", collection_name=collection_name, total=total)
+        self.logger.info("Indexed documents", collection_name=collection_name, total=total)
 
 
     async def index_all_collections(self):
         self.logger.info("Indexing all documents")
+
+        if not hasattr(self, 'document_store'):
+            self.logger.error("Document store not initialized.")
+            return
 
         executor = ThreadPoolExecutor()  # optionally: limit max_workers
         loop = asyncio.get_running_loop()
