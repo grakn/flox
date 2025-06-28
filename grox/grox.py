@@ -1,5 +1,6 @@
-from typing import Optional, TypedDict
+from typing import Optional, TypedDict, Callable
 import structlog
+from colorama import init, Fore, Style
 
 from langgraph.graph import StateGraph, START, END
 from operator import add
@@ -23,12 +24,26 @@ class Grox:
     def _make_thread_id(self, session_id: str) -> str:
         return f"{self.context.tenant_id}{THREAD_ID_SEPARATOR}{self.context.project_code}{THREAD_ID_SEPARATOR}{session_id}"
 
-    async def handle_event(self, data: dict):
+    async def handle_event(self, data: dict, output_stream: Callable):
         # Invoke the graph with a thread_id
         self.logger.info("event_received", data=data)
+        prompt = data.get("prompt")
+        if not prompt:
+            raise ValueError("empty prompt")
+        inputs = {"messages": [{"role": "user", "content": prompt}]}
         config = {"configurable": {"thread_id": self._make_thread_id(data["session_id"])}}
-        result = await self.context.graph.ainvoke({"foo": ""}, config)
-        await self._process(result)
+
+        async for chunk in self.context.graph.astream(inputs, config=config, stream_mode="updates"):
+            #self.print_yellow("chunk", chunk)
+            output_stream(chunk)
+        #result = await self.context.graph.ainvoke({"foo": ""}, config)
+        #await self._process(result)
+
+    @staticmethod
+    def print(*args, sep=" ", end="\n"):
+        message = sep.join(str(arg) for arg in args)
+        colored_message = f"{Fore.YELLOW}{message}{Style.RESET_ALL}"
+        print(colored_message, end=end)
 
     async def _process(self, data: dict):
         self.logger.debug("processing_data", data=data)

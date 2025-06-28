@@ -3,10 +3,11 @@ import hashlib
 import threading
 import logging
 from typing import Any, List, Dict, Optional, Sequence, Callable
+from langchain.tools import Tool
 
 import yaml
-from .retrieval import DocumentRetrieval
-from .schema import Document, Collection
+from .retriever import DocumentRetriever
+from .schema import Document, Collection, DocumentSearchParams
 
 logger = logging.getLogger(__name__)
 
@@ -63,14 +64,6 @@ class DocumentStore(abc.ABC):
                 self._vector_stores[collection.name] = self.vector_store_factory(self.model, collection)
             return self._vector_stores[collection.name]
 
-    def as_retrieval(self, collection_name: str) -> DocumentRetrieval:
-        """Build a DocumentRetrieval instance for the given collection name."""
-        collection = self.find_collection(collection_name)
-        if not collection:
-            raise ValueError(f"Collection '{collection_name}' not found")
-        vector_store = self._get_vector_store(collection)
-        return DocumentRetrieval(vector_store, self.logger)
-
     @staticmethod
     def _hash_text(text: str) -> str:
         """Create a stable hash for a piece of text."""
@@ -102,3 +95,53 @@ class DocumentStore(abc.ABC):
             total_indexed += len(inserted_keys)
 
         return total_indexed
+
+    def get_retriever(self, collection_name: str) -> DocumentRetriever:
+        """Build a DocumentRetrieval instance for the given collection name."""
+        collection = self.find_collection(collection_name)
+        if not collection:
+            raise ValueError(f"Collection '{collection_name}' not found")
+        vector_store = self._get_vector_store(collection)
+        return DocumentRetriever(vector_store, self.logger)
+
+    def _tool_fn(self, params: DocumentSearchParams):
+        retriever = self.get_retriever(params.collection_name)
+
+        bm25_kwargs = {
+            "k1": params.k1,
+            "b": params.b,
+            "epsilon": params.epsilon,
+        }
+
+        return retriever.get_relevant_documents(
+            query=params.query,
+            search_type=params.search_type,
+            num_results=params.num_results,
+            score_threshold=params.score_threshold,
+            **{k: v for k, v in bm25_kwargs.items() if v is not None},
+        )
+
+    """
+    Sample Agent Action Input
+    {
+      "action": "DocumentSearch",
+      "action_input": {
+        "query": "What is LangGraph?",
+        "collection_name": "ai_docs",
+        "search_type": "similarity_search_with_score_bm25_ranked",
+        "num_results": 3,
+        "score_threshold": 0.75,
+        "k1": 1.5,
+        "b": 0.9,
+        "epsilon": 0.2
+      }
+    }
+    """
+    @property  # or use @cached_property if you want it cached
+    def tool(self) -> Tool:
+        return Tool(
+            name="DocumentSearch",
+            func=self._tool_fn,
+            description="Search documents from a specific collection using vector similarity or BM25 re-ranking.",
+            args_schema=DocumentSearchParams
+        )

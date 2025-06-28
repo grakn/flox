@@ -2,22 +2,17 @@ from typing import Dict, Any
 from types import SimpleNamespace
 from langfabric import ModelManager, build_embeddings
 from langgraph.graph import StateGraph, START, END
+from langgraph.prebuilt import create_react_agent
 from operator import add
 import structlog
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from langchain.tools import Tool
 
 from .config import GroxAppConfig, GroxProjectConfig, DefaultsConfig
 from .factory import build_checkpoint_saver, build_chat_history_factory, build_document_store
 from .state import GroxState
 
-
-# Define your nodes
-def node_a(state: GroxState) -> GroxState:
-    return {"foo": "a", "bar": ["a"]}
-
-def node_b(state: GroxState) -> GroxState:
-    return {"foo": "b", "bar": ["b"]}
 
 
 class GroxProject:
@@ -32,7 +27,20 @@ class GroxProject:
         self._initialize_logger()
         self._initialize_models()
         self._initialize_backends()
-        self._initialize_workflow()
+        #self._initialize_workflow()
+
+        self.graph = create_react_agent(
+            self.chat_model_with_tools,
+            tools=[self.check_weather, self.document_store.tool],
+            prompt="You are a helpful assistant",
+        )
+
+
+    @staticmethod
+    def check_weather(location: str) -> str:
+        '''Return the weather forecast for the specified location.'''
+        return f"It's always sunny in {location}"
+
 
     def _initialize_logger(self):
         logger_metadata = {
@@ -51,7 +59,9 @@ class GroxProject:
 
 
     def _initialize_models(self):
-        self.embeddings = None
+        self.chat_model = None
+        self.chat_model_with_tools = None
+        self.embedding_model = None
 
         infra = self.config.infrastructure
         if not infra:
@@ -62,11 +72,16 @@ class GroxProject:
         self.model_manager = ModelManager(infra.model_configs)
         self.defaults = infra.defaults or DefaultsConfig()
 
+        #
+        # chat_model
+        #
         if self.defaults.chat_model and self.defaults.chat_model not in infra.model_configs:
             raise ValueError(
                 f"Chat model '{self.defaults.chat_model}' not found in model config for "
                 f"{self.tenant_id}:{self.project_code}"
             )
+
+        self.chat_model = self.model_manager.load(self.defaults.chat_model)
 
         if self.defaults.chat_model:
             if self.debug:
@@ -74,6 +89,26 @@ class GroxProject:
         else:
             self.logger.warning("chat model is empty, please define infrastructure->defaults->chat_model")
 
+        #
+        # chat_model_with_tools
+        #
+        if self.defaults.chat_model_with_tools and self.defaults.chat_model_with_tools not in infra.model_configs:
+            raise ValueError(
+                f"Chat model with tools '{self.defaults.chat_model_with_tools}' not found in model config for "
+                f"{self.tenant_id}:{self.project_code}"
+            )
+
+        self.chat_model_with_tools = self.model_manager.load(self.defaults.chat_model_with_tools)
+
+        if self.defaults.chat_model_with_tools:
+            if self.debug:
+                self.logger.info("using chat model with tools", model=self.defaults.chat_model_with_tools)
+        else:
+            self.logger.warning("chat model with tools is empty, please define infrastructure->defaults->chat_model_with_tools")
+
+        #
+        # embedding_model
+        #
         if self.defaults.embedding_model and self.defaults.embedding_model not in infra.model_configs:
             raise ValueError(
                 f"Embedding model '{self.defaults.embedding_model}' not found in model config for "
@@ -87,7 +122,9 @@ class GroxProject:
             self.logger.warning("embedding model is empty, please define infrastructure->defaults->embedding_model")
             return
 
-
+        #
+        # load embedding_model
+        #
         model_config = infra.model_configs.get(self.defaults.embedding_model)
         if not model_config:
             raise ValueError(
@@ -95,7 +132,7 @@ class GroxProject:
                 f"{self.tenant_id}:{self.project_code}"
             )
 
-        self.embeddings = build_embeddings(model_config)
+        self.embedding_model = build_embeddings(model_config)
 
     @staticmethod
     def _null_chat_history_factory(session_id: str) -> Any:
@@ -127,7 +164,7 @@ class GroxProject:
         vector_store_cfg = backend_configs.get("vector_store")
         if vector_store_cfg:
 
-            if not self.embeddings:
+            if not self.embedding_model:
                 raise ValueError(
                     f"Embedding model not defined for vector store in "
                     f"{self.tenant_id}:{self.project_code}"
@@ -146,7 +183,7 @@ class GroxProject:
                 )
 
             self.document_store = build_document_store(
-                self.embeddings, self.tenant_id, self.project_code, self.config.orchestration.documents, vector_store_cfg, self.logger
+                self.embedding_model, self.tenant_id, self.project_code, self.config.orchestration.documents, vector_store_cfg, self.logger
             )
 
             if vector_store_cfg.backend == "memory":
@@ -156,15 +193,6 @@ class GroxProject:
         total = self.document_store.index_documents(collection_name)
         self.logger.info("Memory: Indexed documents", collection_name=collection_name, total=total)
 
-    def _initialize_workflow(self):
-        self.workflow = StateGraph(GroxState)
-        self.workflow.add_node("node_a", node_a)
-        self.workflow.add_node("node_b", node_b)
-        self.workflow.add_edge(START, "node_a")
-        self.workflow.add_edge("node_a", "node_b")
-        self.workflow.add_edge("node_b", END)
-
-        self.graph = self.workflow.compile(checkpointer=self.checkpoint_saver)
 
     async def index_all_collections(self):
         self.logger.info("Indexing all documents")

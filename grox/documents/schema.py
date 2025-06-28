@@ -4,6 +4,28 @@ from typing import List, Optional, Literal, Dict, Any, Annotated, Union
 from redisvl.schema import IndexSchema, IndexInfo, BaseField
 from redisvl.utils.utils import model_to_dict
 
+
+# ----------------
+# DocumentSearch
+# ----------------
+
+class DocumentSearchParams(BaseModel):
+    query: str = Field(..., description="The user query string")
+    collection_name: str = Field(..., description="Name of the document collection")
+    search_type: str = Field(
+        default="similarity",
+        description="Search strategy: one of 'similarity', 'mmr', 'similarity_score_threshold', "
+                    "'similarity_search_with_score', or 'similarity_search_with_score_bm25_ranked'"
+    )
+    num_results: int = Field(default=5, description="Maximum number of documents to return")
+    score_threshold: float = Field(default=0.8, description="Minimum similarity score to include")
+
+    # Optional BM25 parameters
+    k1: Optional[float] = Field(default=None, description="BM25 term frequency saturation")
+    b: Optional[float] = Field(default=None, description="BM25 length normalization")
+    epsilon: Optional[float] = Field(default=None, description="BM25 small constant for smoothing")
+
+
 # ----------------
 # Field Definitions
 # ----------------

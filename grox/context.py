@@ -84,7 +84,7 @@ class GroxContext:
         self.app = app
 
         # Automatically setup logging
-        setup_logging(app.log_level)
+        setup_logging(app.log_level, app.log_format)
         if app.log_callback:
             # register log callback if needed
             register_log_callback(app.log_callback)
@@ -114,6 +114,10 @@ class GroxContext:
         key = (tenant_id, project_code)
         with self._projects_lock:
             return self._projects.get(key)
+
+    def has_project(self, tenant_id: str, project_code: str) -> bool:
+        with self._projects_lock:
+            return (tenant_id, project_code) in self._projects
 
     def list_projects(self):
         with self._projects_lock:

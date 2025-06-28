@@ -1,6 +1,7 @@
 service: basic-app
 environment: dev
 log_level: DEBUG
+log_format: console
 tenants:
   tenantA:
     - "projectA/grox.yaml"

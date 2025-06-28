@@ -12,6 +12,7 @@ class GroxAppConfig(BaseModel):
     version: Optional[str] = None
     environment: Optional[str] = None
     log_level: str = "INFO"
+    log_format: str = "console"
     log_callback: Optional[Callable[[dict], None]] = None
     tenants: Dict[str, List[str]] = Field(default_factory=dict)
 
@@ -40,6 +41,7 @@ class OrchestrationConfig(BaseModel):
 # === Infrastructure ===
 class DefaultsConfig(BaseModel):
     chat_model: Optional[str] = None
+    chat_model_with_tools: Optional[str] = None
     embedding_model: Optional[str] = None
 
 class InfrastructureConfig(BaseModel):

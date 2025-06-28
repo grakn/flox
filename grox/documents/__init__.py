@@ -9,8 +9,8 @@ from grox.documents.store import (
     DocumentStore,
 )
 
-from grox.documents.retrieval import (
-    DocumentRetrieval,
+from grox.documents.retriever import (
+    DocumentRetriever,
 )
 
 __all__ = [
@@ -19,5 +19,5 @@ __all__ = [
     "DataEntry",
     "CollectionIndexSchema",
     "DocumentStore",
-    "DocumentRetrieval",
+    "DocumentRetriever",
 ]
